@@ -156,55 +156,8 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         if (ContextCompat.checkSelfPermission(getApplicationContext(), READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString()+"/BokuNoNotes")
-            Log.i(TAG,"${dir.path}")
-            if (!dir.exists())
-                dir.mkdirs()
-
-            val file=File(dir,"${item.title}.pdf")
-            file.createNewFile()
-            val fileOutputStream=FileOutputStream(file)
-            val pdfDocument = PdfDocument()
-            val paint=Paint()
-
-            val pageWidth= Resources.getSystem().getDisplayMetrics().widthPixels
-            val pageHeight= Resources.getSystem().getDisplayMetrics().heightPixels
-            val pageInfo = PageInfo.Builder(pageWidth, pageHeight, 1).create()
-            val page = pdfDocument.startPage(pageInfo)
-            val canvas=page.canvas
-
-            paint.textAlign=Paint.Align.CENTER
-            paint.textSize=80f
-            paint.isUnderlineText=true
-            canvas.drawText("${item.title?.uppercase()}", (pageWidth/2).toFloat(), 250F,paint)
-
-            paint.textSize=40f
-            paint.isUnderlineText=false
-            paint.color=Color.MAGENTA
-            canvas.drawText("${item.location} on ${ SimpleDateFormat("dd-MM-yyyy 'at' HH:mm").format(item.createdAt)}",
-                (pageWidth/2).toFloat(), 320F,paint)
-
-            paint.textSize=45f
-            paint.color=Color.BLUE
-            paint.textAlign=Paint.Align.CENTER
-            canvas.drawText("${item.text}", (pageWidth/2).toFloat(), (pageHeight/2).toFloat(),paint)
-
-
-
-            pdfDocument.finishPage(page)
-
-
-            try {
-                pdfDocument.writeTo(fileOutputStream)
-                pdfDocument.close()
-                Toast.makeText(this, "PDF saved successfully", Toast.LENGTH_SHORT).show()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-
-            pdfDocument.close()
-
-
+            val pdfGenerator = PDFGenerator()
+            pdfGenerator.createPdf(this,item,this)
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE), REQUEST_CODE)
         }
