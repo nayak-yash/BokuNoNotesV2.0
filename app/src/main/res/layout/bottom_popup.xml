@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:text="Delete"
             android:layout_marginLeft="30dp"
-            android:textSize="16sp"/>
+            android:textSize="20sp"/>
 
     </LinearLayout>
 
@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="Share"
             android:layout_marginLeft="30dp"
-            android:textSize="16sp"/>
+            android:textSize="20sp"/>
 
     </LinearLayout>
 
@@ -79,7 +79,7 @@
             android:layout_height="wrap_content"
             android:text="Save"
             android:layout_marginLeft="30dp"
-            android:textSize="16sp"/>
+            android:textSize="20sp"/>
 
     </LinearLayout>
 

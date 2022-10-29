@@ -69,33 +69,34 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     @SuppressLint("NotifyDataSetChanged")
     private fun setUpRecyclerView() {
         noteList=ArrayList<Note>()
+        mAdapter= NoteAdapter(noteList,this)
+        binding.recyclerView.adapter=mAdapter
+        binding.recyclerView.layoutManager=StaggeredGridLayoutManager(2,LinearLayoutManager.VERTICAL)
+
         mNoteDao.noteCollection
             .whereEqualTo("userId",mNoteDao.mAuth.currentUser?.uid)
             .orderBy("createdAt",Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
-                noteList.clear()
                 if (e != null) {
                     Log.w(TAG, "listen:error", e)
                     return@addSnapshotListener
                 }
 
-                for (dc in snapshots!!.documentChanges) {
-                    val note=dc.document.toObject<Note>()
-                    if (dc.type == DocumentChange.Type.ADDED) {
-                        noteList.add(note)
-                        Log.i(TAG,"${note.title}")
-
-                    }
-                    if(dc.type == DocumentChange.Type.REMOVED) {
-                        noteList.remove(note)
+                snapshots?.let{
+                    for (dc in snapshots!!.documentChanges) {
+                        val note=dc.document.toObject<Note>()
+                        if (dc.type == DocumentChange.Type.ADDED) {
+                            noteList.add(note)
+                        }
+                        if(dc.type == DocumentChange.Type.REMOVED) {
+                            noteList.remove(note)
+                        }
+                        mAdapter.notifyDataSetChanged()
                     }
                 }
-                mAdapter.notifyDataSetChanged()
             }
-        mAdapter= NoteAdapter(noteList,this)
-        binding.recyclerView.adapter=mAdapter
-        binding.recyclerView.layoutManager=StaggeredGridLayoutManager(2,LinearLayoutManager.VERTICAL)
-    }
+
+        }
 
 
     override fun onQueryTextSubmit(query: String?): Boolean {
@@ -135,20 +136,25 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         val btnSave=dialog.findViewById<LinearLayout>(R.id.btnSave)
 
         btnDelete.setOnClickListener{
-
+            deleteItem(item)
+            dialog.hide()
         }
         btnShare.setOnClickListener{
-
+            dialog.hide()
         }
         btnSave.setOnClickListener{
-            Log.i(TAG,"clicked")
             saveAsFile(item)
+            dialog.hide()
         }
         dialog.show()
         dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT)
         dialog.window?.setBackgroundDrawable(ColorDrawable(TRANSPARENT))
         dialog.window?.attributes?.windowAnimations=R.style.DialogAnimation
         dialog.window?.setGravity(Gravity.BOTTOM)
+    }
+
+    private fun deleteItem(item: Note) {
+        mNoteDao.deleteNote(item)
     }
 
     @SuppressLint("SimpleDateFormat")
