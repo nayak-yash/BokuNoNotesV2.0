@@ -4,18 +4,17 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Resources
-import android.graphics.Color
 import android.graphics.Color.TRANSPARENT
-import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
-import android.graphics.pdf.PdfDocument
-import android.graphics.pdf.PdfDocument.PageInfo
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
@@ -34,10 +33,8 @@ import com.bokuno.notes.models.Note
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.storage.FirebaseStorage
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -48,6 +45,11 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     private lateinit var binding: ActivityMainBinding
     private lateinit var mNoteDao: NoteDao
     private lateinit var noteList: ArrayList<Note>
+    private var pdfGenerator = PDFGenerator()
+    private companion object{
+        private const val REQUEST_CODE: Int=101
+        private const val TAG="Mainxy"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,10 +125,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         return true
     }
 
-    private companion object{
-        private val REQUEST_CODE: Int=101
-        private const val TAG="Mainxy"
-    }
+
     private fun showBottomDialog(item: Note) {
         val dialog = Dialog(this)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -140,6 +139,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             dialog.hide()
         }
         btnShare.setOnClickListener{
+            shareFileLink(item)
             dialog.hide()
         }
         btnSave.setOnClickListener{
@@ -153,6 +153,84 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         dialog.window?.setGravity(Gravity.BOTTOM)
     }
 
+    private fun isOnline(context: Context): Boolean {
+        if (context == null) return false
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                        return true
+                    }
+                }
+            }
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun shareFileLink(note: Note) {
+        if (isOnline(this)) {
+            if (ContextCompat.checkSelfPermission(
+                    getApplicationContext(),
+                    READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    getApplicationContext(),
+                    WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                pdfGenerator.flag = "SHARE"
+                pdfGenerator.createPdf(this, note, this)
+                val uri = Uri.fromFile(pdfGenerator.file)
+                val storage = FirebaseStorage.getInstance()
+                val pdfRef = storage.reference.child("pdf/${uri.lastPathSegment}")
+                pdfRef.putFile(uri).addOnSuccessListener {
+                    it.task.continueWithTask { task ->
+                        if (!task.isSuccessful) {
+                            task.exception?.let {
+                                Toast.makeText(this, "Couldn't share", Toast.LENGTH_SHORT).show()
+                                throw it
+                            }
+                        }
+                        pdfRef.downloadUrl
+                    }.addOnCompleteListener {
+                        if (it.isSuccessful) {
+                            val link = it.result.toString()
+                            val shareIntent = Intent(Intent.ACTION_SEND)
+                            shareIntent.type = "text/plain"
+                            shareIntent.putExtra(Intent.EXTRA_TEXT, link)
+                            shareIntent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+                            startActivity(shareIntent)
+                        } else {
+                            Toast.makeText(this, "Couldn't share", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE),
+                    REQUEST_CODE
+                )
+            }
+        }
+        else{
+            Toast.makeText(this, "Enable network", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun deleteItem(item: Note) {
         mNoteDao.deleteNote(item)
     }
@@ -162,12 +240,13 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         if (ContextCompat.checkSelfPermission(getApplicationContext(), READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         ) {
-            val pdfGenerator = PDFGenerator()
+            pdfGenerator.flag="SAVE"
             pdfGenerator.createPdf(this,item,this)
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE), REQUEST_CODE)
         }
     }
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
         grantResults: IntArray) {

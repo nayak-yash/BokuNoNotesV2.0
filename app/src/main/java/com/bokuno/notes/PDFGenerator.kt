@@ -1,13 +1,12 @@
 package com.bokuno.notes
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.util.DisplayMetrics
@@ -15,27 +14,38 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import com.bokuno.notes.databinding.PdfLayoutBinding
 import com.bokuno.notes.models.Note
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.UploadTask
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 
+
 class PDFGenerator {
     private lateinit var binding: PdfLayoutBinding
+    private lateinit var fileOutputStream: FileOutputStream
+    lateinit var file: File
+    public var flag = "SAVE"
+    private lateinit var context: Context
+    private var TAG = "PDFxy"
+
     private fun createBitmapFromView(
         context: Context,
         view: View,
         note: Note,
         activity: Activity
     ): Bitmap {
-
+        this.context = context
         binding = PdfLayoutBinding.bind(view)
         binding.tvHeading.setPaintFlags(binding.tvHeading.getPaintFlags() or Paint.UNDERLINE_TEXT_FLAG)
         binding.tvHeading.text = note.title
-        binding.tvDetails.text = note.location + " " +SimpleDateFormat("dd-MM-yyyy 'at' HH:mm").format(note.createdAt)
+        binding.tvDetails.text =
+            note.location + " " + SimpleDateFormat("dd-MM-yyyy 'at' HH:mm").format(note.createdAt)
         binding.tvNote.text = note.text
         return createBitmap(context, binding.root, activity)
     }
@@ -49,7 +59,7 @@ class PDFGenerator {
         convertBitmapToPdf(bitmap, activity, note)
     }
 
-    private fun createBitmap(context: Context, view: View, activity: Activity, ): Bitmap {
+    private fun createBitmap(context: Context, view: View, activity: Activity): Bitmap {
         val displayMetrics = DisplayMetrics()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display?.getRealMetrics(displayMetrics)
@@ -72,23 +82,27 @@ class PDFGenerator {
         )
 
 
-
         val canvas = Canvas(bitmap)
         view.draw(canvas)
-        return Bitmap.createScaledBitmap(bitmap, 1240 , 1754, true)
+        return Bitmap.createScaledBitmap(bitmap, 1240, 1754, true)
     }
 
     private fun convertBitmapToPdf(bitmap: Bitmap, context: Context, note: Note) {
-        val dir = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                .toString() + "/BokuNoNotes"
-        )
-        if (!dir.exists())
-            dir.mkdirs()
 
-        val file = File(dir, "${note.title}.pdf")
-        file.createNewFile()
-        val fileOutputStream = FileOutputStream(file)
+        if (flag == "SAVE") {
+            val outputDir = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    .toString() + "/BokuNoNotes"
+            )
+            if (!outputDir.exists())
+                outputDir.mkdirs()
+            file = File(outputDir, "${note.title}")
+        } else if (flag == "SHARE") {
+            val outputDir = context.cacheDir // context being the Activity pointer
+            file = File.createTempFile("${note.title}", ".pdf", outputDir)
+            file.deleteOnExit()
+        }
+        fileOutputStream = FileOutputStream(file)
         val pdfDocument = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
         val page = pdfDocument.startPage(pageInfo)
@@ -97,7 +111,9 @@ class PDFGenerator {
         try {
             pdfDocument.writeTo(fileOutputStream)
             pdfDocument.close()
-            Toast.makeText(context, "PDF saved successfully", Toast.LENGTH_SHORT).show()
+            if (flag != "SHARE") {
+                Toast.makeText(context, "PDF saved successfully", Toast.LENGTH_SHORT).show()
+            }
         } catch (e: IOException) {
             e.printStackTrace()
         }
