@@ -36,6 +36,7 @@ import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAdapter {
@@ -70,35 +71,37 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setUpRecyclerView() {
-        noteList=ArrayList<Note>()
-        mAdapter= NoteAdapter(noteList,this)
-        binding.recyclerView.adapter=mAdapter
-        binding.recyclerView.layoutManager=StaggeredGridLayoutManager(2,LinearLayoutManager.VERTICAL)
+        noteList = ArrayList()
+        mAdapter = NoteAdapter(noteList, this)
+        binding.recyclerView.adapter = mAdapter
+        binding.recyclerView.layoutManager =
+            StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
 
         mNoteDao.noteCollection
-            .whereEqualTo("userId",mNoteDao.mAuth.currentUser?.uid)
-            .orderBy("createdAt",Query.Direction.DESCENDING)
+            .whereEqualTo("userId", mNoteDao.mAuth.currentUser?.uid)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
+
                 if (e != null) {
                     Log.w(TAG, "listen:error", e)
                     return@addSnapshotListener
                 }
 
-                snapshots?.let{
-                    for (dc in snapshots!!.documentChanges) {
+                snapshots?.let {
+                    for (dc in it!!.documentChanges) {
                         val note=dc.document.toObject<Note>()
-                        if (dc.type == DocumentChange.Type.ADDED) {
+                        if(dc.type==DocumentChange.Type.ADDED) {
+                            noteList.remove(note)
                             noteList.add(note)
                         }
-                        if(dc.type == DocumentChange.Type.REMOVED) {
-                            noteList.remove(note)
+                        else if(dc.type==DocumentChange.Type.REMOVED){
+                                noteList.remove(note)
                         }
                         mAdapter.notifyDataSetChanged()
                     }
                 }
             }
-
-        }
+    }
 
 
     override fun onQueryTextSubmit(query: String?): Boolean {
@@ -109,6 +112,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         noteList.clear()
         mNoteDao.noteCollection
             .whereEqualTo("userId",mNoteDao.mAuth.currentUser?.uid)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w(TAG, "listen:error", e)

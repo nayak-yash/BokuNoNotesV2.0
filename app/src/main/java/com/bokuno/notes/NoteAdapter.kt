@@ -2,6 +2,8 @@
 
 package com.bokuno.notes
 
+import android.graphics.Color
+import android.graphics.ColorFilter
 import android.opengl.Visibility
 import android.text.TextUtils
 import android.util.Log
