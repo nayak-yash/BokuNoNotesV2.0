@@ -33,7 +33,7 @@ class LoginActivity : AppCompatActivity() {
                         finish()
                     }
                     else{
-                        Toast.makeText(this,it.exception.toString(), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this,"Login Failed", Toast.LENGTH_SHORT).show()
                     }
                 }
             }

@@ -6,7 +6,9 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.Color.TRANSPARENT
 import android.graphics.drawable.ColorDrawable
 import android.location.LocationManager
@@ -16,10 +18,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.view.Window
+import android.view.*
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -30,9 +32,12 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bokuno.notes.daos.NoteDao
 import com.bokuno.notes.databinding.ActivityMainBinding
 import com.bokuno.notes.models.Note
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.Query.Direction
 import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
 import java.util.*
@@ -42,6 +47,11 @@ import kotlin.collections.ArrayList
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAdapter {
 
 
+
+    private lateinit var sharedPref: SharedPreferences
+    private lateinit var editor: SharedPreferences.Editor
+    private lateinit var factor : String
+    private var order : Int =0
     private lateinit var mAdapter:NoteAdapter
     private lateinit var binding: ActivityMainBinding
     private lateinit var mNoteDao: NoteDao
@@ -61,7 +71,63 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             val cIntent=Intent(this,CreateNoteActivity::class.java)
             startActivity(cIntent)
         }
+
+        noteList=ArrayList()
+        sharedPref= getSharedPreferences("SortPref",Context.MODE_PRIVATE)
+        editor=sharedPref.edit()
+        factor = sharedPref.getString("factor","createdAt")!!
+        order = sharedPref.getInt("order", 1)
+
+        binding.btnSortFactor.setOnClickListener{
+            showPopup(binding.btnSortFactor)
+        }
+
+
+        binding.btnSortOrder.setImageResource(if (order ==1) R.drawable.ic_downward else R.drawable.ic_upward)
+
+        binding.btnSortOrder.setOnClickListener{
+            if(order==1) {
+                binding.btnSortOrder.setImageResource(R.drawable.ic_upward)
+                editor.apply {
+                    putInt("order", 0)
+                    apply()
+                }
+            }
+            else{
+                binding.btnSortOrder.setImageResource(R.drawable.ic_downward)
+                editor.apply {
+                    putInt("order", 1)
+                    apply()
+                }
+            }
+            setUpRecyclerView()
+        }
         binding.searchBar.setOnQueryTextListener(this)
+    }
+
+    private fun showPopup(view : View) {
+        val popup = PopupMenu(this, view)
+        popup.inflate(R.menu.sort_popup_menu)
+        popup.show()
+        popup.setOnMenuItemClickListener {
+            when (it!!.itemId) {
+                R.id.btnDateCreated -> {
+                    editor.apply{
+                    putString("factor","createdAt")
+                    apply()
+                }
+                }
+                R.id.btnTitle -> {
+                    editor.apply{
+                    putString("factor","title")
+                    apply()
+                }
+                }
+            }
+            setUpRecyclerView()
+            true
+
+        }
     }
 
     override fun onStart() {
@@ -69,17 +135,32 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         setUpRecyclerView()
     }
 
-    @SuppressLint("NotifyDataSetChanged")
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+
+        menuInflater.inflate(R.menu.menu_main,menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId==R.id.btnLogout){
+            Log.i(TAG,"Logout")
+            Firebase.auth.signOut()
+            val logoutIntent= Intent(this,LoginActivity::class.java)
+            logoutIntent.flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity((logoutIntent))
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun setUpRecyclerView() {
-        noteList = ArrayList()
+        factor = sharedPref.getString("factor","createdAt")!!
+        order = sharedPref.getInt("order", 1)
         mAdapter = NoteAdapter(noteList, this)
         binding.recyclerView.adapter = mAdapter
-        binding.recyclerView.layoutManager =
-            StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
-
+        binding.recyclerView.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
         mNoteDao.noteCollection
             .whereEqualTo("userId", mNoteDao.mAuth.currentUser?.uid)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .orderBy(factor,if(order==1) Direction.DESCENDING else Direction.ASCENDING)
             .addSnapshotListener { snapshots, e ->
 
                 if (e != null) {
@@ -110,9 +191,11 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
 
     override fun onQueryTextChange(search: String?): Boolean {
         noteList.clear()
+        factor = sharedPref.getString("factor","createdAt")!!
+        order = sharedPref.getInt("order", 1)
         mNoteDao.noteCollection
             .whereEqualTo("userId",mNoteDao.mAuth.currentUser?.uid)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .orderBy(factor,if(order==1) Direction.DESCENDING else Direction.ASCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w(TAG, "listen:error", e)

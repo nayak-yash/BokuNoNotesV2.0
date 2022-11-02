@@ -2,18 +2,22 @@ package com.bokuno.notes
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.bokuno.notes.daos.NoteDao
 import com.bokuno.notes.databinding.ActivityCreateNoteBinding
@@ -30,6 +34,7 @@ class CreateNoteActivity : AppCompatActivity() {
         var TAG = "CNxy"
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=ActivityCreateNoteBinding.inflate(layoutInflater)
@@ -38,18 +43,100 @@ class CreateNoteActivity : AppCompatActivity() {
         binding.tvDetectLocation.setOnClickListener{
             getCurrentLocation()
         }
+        binding.scheduleSwitch.setOnCheckedChangeListener{compoundButton,isChecked ->
+            if(isChecked){
+                binding.timePicker.visibility=View.VISIBLE
+                binding.datePicker.visibility= View.VISIBLE
+            }
+            else{
+                binding.timePicker.visibility=View.GONE
+                binding.datePicker.visibility= View.GONE
+            }
+        }
+
         binding.btnAdd.setOnClickListener{
             val noteDao=NoteDao()
             val title=binding.etTitle.text.toString().trim()
             val note=binding.etNote.text.toString().trim()
+            if(binding.scheduleSwitch.isChecked){
+                createNotificationChannel()
+                scheduleNotification(title,note)
+            }
             if(title.isNotEmpty() && note.isNotEmpty()){
                 noteDao.addNote(title,note,location)
                 finish()
             }
-            else{
-                Toast.makeText(this,"Fill the fields",Toast.LENGTH_SHORT).show()
+            else if(title.isEmpty()){
+                Toast.makeText(this,"Fill the title",Toast.LENGTH_SHORT).show()
+            }else{
+                Toast.makeText(this,"Fill the note",Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun scheduleNotification(title : String, note : String) {
+        val intent = Intent(applicationContext, Notification::class.java)
+        intent.putExtra(titleExtra, title)
+        intent.putExtra(messageExtra, note)
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            notificationID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val time = getTime()
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            time,
+            pendingIntent
+        )
+        showAlert(time, title, note)
+    }
+
+    private fun showAlert(time: Long, title: String, message: String)
+    {
+        val date = Date(time)
+        val dateFormat = android.text.format.DateFormat.getLongDateFormat(applicationContext)
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(applicationContext)
+
+        AlertDialog.Builder(this)
+            .setTitle("Notification Scheduled")
+            .setMessage(
+                "Title: " + title +
+                        "\nMessage: " + message +
+                        "\nAt: " + dateFormat.format(date) + " " + timeFormat.format(date))
+            .setPositiveButton("Okay"){_,_ ->}
+            .show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun getTime(): Long
+    {
+        val minute = binding.timePicker.minute
+        val hour = binding.timePicker.hour
+        val day = binding.datePicker.dayOfMonth
+        val month = binding.datePicker.month
+        val year = binding.datePicker.year
+
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, day, hour, minute)
+        return calendar.timeInMillis
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel()
+    {
+        val name = "Notif Channel"
+        val desc = "A Description of the Channel"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance)
+        channel.description = desc
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun getCurrentLocation() {

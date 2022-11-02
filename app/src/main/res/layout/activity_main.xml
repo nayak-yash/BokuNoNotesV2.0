@@ -13,17 +13,16 @@
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         android:backgroundTint="#b2beb5"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:queryHint="Enter the title"
+        android:maxWidth="280dp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnSortFactor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnSortFactor" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@+id/searchBar"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/searchBar"
         app:layout_constraintTop_toBottomOf="@+id/searchBar"
         tools:listitem="@layout/item_note" />
 
@@ -37,6 +36,25 @@
         android:layout_marginBottom="20dp"
         android:src="@drawable/add_notes"
         />
+
+    <ImageButton
+        android:id="@+id/btnSortFactor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnSortOrder"
+        app:layout_constraintEnd_toStartOf="@+id/btnSortOrder"
+        app:layout_constraintTop_toTopOf="@+id/btnSortOrder"
+        app:srcCompat="@drawable/ic_sort" />
+
+    <ImageButton
+        android:id="@+id/btnSortOrder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_downward" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
