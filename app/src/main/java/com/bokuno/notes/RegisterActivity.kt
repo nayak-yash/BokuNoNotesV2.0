@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import com.bokuno.notes.databinding.ActivityRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -23,18 +24,23 @@ class RegisterActivity : AppCompatActivity() {
             val confirmPass=binding.etPasswordConfirm.text.toString()
             if(email.isNotEmpty() && pass.isNotEmpty() && confirmPass.isNotEmpty()){
                 if(pass == confirmPass){
-                    mAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener{
-                        if(it.isSuccessful){
+                    mAuth.createUserWithEmailAndPassword(email,pass).addOnSuccessListener{
                             val loginIntent = Intent(this,LoginActivity::class.java)
                             startActivity(loginIntent)
                             finish()
-                        }else{
-                            Toast.makeText(this,it.exception.toString(),Toast.LENGTH_SHORT).show()
-                        }
                     }
+                        .addOnFailureListener {
+                            when(it){
+                                is FirebaseAuthWeakPasswordException ->
+                            Toast.makeText(this,"Select a strong password",Toast.LENGTH_SHORT).show()
+
+                                else ->
+                                    Toast.makeText(this,it.localizedMessage,Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 }
                 else{
-                    Toast.makeText(this,"Password not matching",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this,"Confirm password and password are not same",Toast.LENGTH_SHORT).show()
                 }
             }
             else{

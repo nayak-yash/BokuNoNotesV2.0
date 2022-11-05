@@ -1,9 +1,9 @@
 package com.bokuno.notes
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.bokuno.notes.databinding.ActivityLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 
@@ -26,17 +26,15 @@ class LoginActivity : AppCompatActivity() {
             val email=binding.etEmail.text.toString()
             val pass=binding.etPassword.text.toString()
             if(email.isNotEmpty() && pass.isNotEmpty()){
-                mAuth.signInWithEmailAndPassword(email,pass).addOnCompleteListener {
-                    if(it.isSuccessful) {
+                mAuth.signInWithEmailAndPassword(email,pass).addOnSuccessListener {
                         val mainIntent = Intent(this, MainActivity::class.java)
                         startActivity(mainIntent)
                         finish()
                     }
-                    else{
-                        Toast.makeText(this,"Login Failed", Toast.LENGTH_SHORT).show()
+                    .addOnFailureListener {
+                        Toast.makeText(this, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
-            }
             else{
                 Toast.makeText(this,"Fields are not complete", Toast.LENGTH_SHORT).show()
             }

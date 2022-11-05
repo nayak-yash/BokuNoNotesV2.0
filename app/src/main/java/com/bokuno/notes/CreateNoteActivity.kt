@@ -31,7 +31,7 @@ class CreateNoteActivity : AppCompatActivity() {
     private var location : String?=null
     companion object{
         const val PERMISSION_ID=101
-        var TAG = "CNxy"
+        var TAG = "xyz"
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -170,7 +170,6 @@ class CreateNoteActivity : AppCompatActivity() {
         subLocalityName = address?.get(0)!!.subLocality
         cityName = address?.get(0)!!.locality
         this.location = "$subLocalityName $cityName"
-        Log.i(TAG, "${this.location}")
         binding.etLocation.setText(this.location)
     }
 

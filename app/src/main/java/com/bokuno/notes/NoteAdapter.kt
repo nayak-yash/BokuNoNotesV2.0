@@ -48,6 +48,7 @@ class NoteAdapter(private val item: ArrayList<Note>,private val listener:INoteAd
         holder.createdAt.text=createdAt
         if(model.location == null){
             holder.location.visibility=View.GONE
+            return
         }
         holder.location.text=model.location
     }
