@@ -156,7 +156,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         binding.recyclerView.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
         mNoteDao.noteCollection
             .whereEqualTo("userId", mNoteDao.mAuth.currentUser?.uid)
-            .whereEqualTo("isPrivate", false)
             .orderBy(factor,if(order==1) Direction.DESCENDING else Direction.ASCENDING)
             .addSnapshotListener { snapshots, e ->
 
@@ -195,7 +194,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         order = sharedPref.getInt("order", 1)
         mNoteDao.noteCollection
             .whereEqualTo("userId",mNoteDao.mAuth.currentUser?.uid)
-            .whereEqualTo("isPrivate", false)
             .orderBy(factor,if(order==1) Direction.DESCENDING else Direction.ASCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
@@ -221,12 +219,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         val btnDelete=dialog.findViewById<LinearLayout>(R.id.btnDelete)
         val btnShare=dialog.findViewById<LinearLayout>(R.id.btnShare)
         val btnSave=dialog.findViewById<LinearLayout>(R.id.btnSave)
-        val btnHide=dialog.findViewById<LinearLayout>(R.id.btnHide)
+//        val btnHide=dialog.findViewById<LinearLayout>(R.id.btnHide)
         val btnFavorite=dialog.findViewById<LinearLayout>(R.id.btnFavorite)
         val btnStatus=dialog.findViewById<LinearLayout>(R.id.btnStatus)
         val tvStatus=btnStatus.findViewById<TextView>(R.id.tvStatus)
         val tvFavorite=btnFavorite.findViewById<TextView>(R.id.tvFavorite)
-        val tvHide=btnHide.findViewById<TextView>(R.id.tvHide)
+//        val tvHide=btnHide.findViewById<TextView>(R.id.tvHide)
         if(item.status ==false){
             tvStatus.text="Mark as Done"
         }
@@ -241,12 +239,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             tvFavorite.text="Mark as unfavorite"
         }
 
-        if(item.isPrivate == true){
-            tvHide.text="Unhide"
-        }
-        else{
-            tvHide.text="Hide"
-        }
+//        if(item.isPrivate == true){
+//            tvHide.text="Unhide"
+//        }
+//        else{
+//            tvHide.text="Hide"
+//        }
         btnDelete.setOnClickListener{
             deleteItem(item)
             dialog.hide()
@@ -263,10 +261,10 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             mNoteDao.editNote(item, 1)    // 1 for changing status
             dialog.hide()
         }
-        btnHide.setOnClickListener{
-            mNoteDao.editNote(item, 2)    // 2 for hiding/unhiding note
-            dialog.hide()
-        }
+//        btnHide.setOnClickListener{
+//            mNoteDao.editNote(item, 2)    // 2 for hiding/unhiding note
+//            dialog.hide()
+//        }
         btnFavorite.setOnClickListener{
             mNoteDao.editNote(item, 3)    // 3 for marking note as favorite/unfavorite
             dialog.hide()

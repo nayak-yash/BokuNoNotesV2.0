@@ -53,9 +53,9 @@ class NoteDao {
                         if(REQUEST_CODE == 1) {
                             noteCollection.document(document.id).update("status",if(note.status ==null) false else true).await()
                         }
-                        else if(REQUEST_CODE == 2) {
-                            noteCollection.document(document.id).update("isPrivate", if(note.isPrivate) false else true).await()
-                        }
+//                        else if(REQUEST_CODE == 2) {
+//                            noteCollection.document(document.id).update("isPrivate", if(note.isPrivate) false else true).await()
+//                        }
                         else if(REQUEST_CODE == 3) {
                             noteCollection.document(document.id).update("isFavorite", if(note.isFavorite) false else true).await()
                         }
