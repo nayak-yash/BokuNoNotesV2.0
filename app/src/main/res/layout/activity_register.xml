@@ -1,11 +1,36 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background_color_login"
     tools:context=".MainActivity"
     >
+
+    <TextView
+        android:layout_width="280dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="78dp"
+        android:background="@drawable/circles_wallpaper"
+        android:scaleY="19"
+        android:scaleX="2"
+        app:layout_constraintBottom_toTopOf="@id/tvSignUp"
+        app:layout_constraintRight_toLeftOf="@id/tvSignUp"
+        />
+
+    <TextView
+        android:layout_width="40dp"
+        android:layout_height="120dp"
+        android:scaleX="26"
+        android:scaleY="4.5"
+        android:background="@drawable/circles_wallpaper"
+        android:transformPivotX="2dp"
+        android:transformPivotY="19dp"
+        android:gravity="bottom"
+        app:layout_constraintTop_toBottomOf="@id/etPasswordConfirm"
+        app:layout_constraintRight_toRightOf="@id/btnRegister"
+        />
 
     <TextView
         android:id="@+id/tvSignUp"
@@ -13,29 +38,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="120dp"
         android:text="Sign Up"
-        android:textSize="40sp"
+        android:textColor="#ffffff"
         android:textStyle="bold"
+        android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRegister"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sign Up"
-        android:layout_marginTop="20dp"
-        app:layout_constraintEnd_toEndOf="@+id/etPasswordConfirm"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/etPasswordConfirm"
-        app:layout_constraintTop_toBottomOf="@+id/etPasswordConfirm" />
+
 
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/etEmail"
         android:layout_width="280dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
+        android:background="@drawable/shape_user_password_editview"
         android:hint="Enter your email"
         android:ems="10"
         android:inputType="textEmailAddress"
@@ -49,6 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:hint="Enter your password"
+        android:background="@drawable/shape_user_password_editview"
         android:ems="10"
         android:inputType="textPassword"
         app:layout_constraintEnd_toEndOf="@+id/etEmail"
@@ -62,11 +80,25 @@
         android:layout_marginTop="20dp"
         android:ems="10"
         android:hint="Re-enter your password"
+        android:background="@drawable/shape_user_password_editview"
         android:inputType="textPassword"
         app:layout_constraintEnd_toEndOf="@+id/etPassword"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/etPassword"
         app:layout_constraintTop_toBottomOf="@+id/etPassword" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_login_button"
+        android:text="Sign Up"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="@+id/etPasswordConfirm"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/etPasswordConfirm"
+        app:layout_constraintTop_toBottomOf="@+id/etPasswordConfirm" />
 
     <TextView
         android:id="@+id/textView2"
@@ -75,7 +107,7 @@
         android:layout_marginTop="32dp"
         android:text="Already have account?"
         app:layout_constraintEnd_toEndOf="@+id/btnRegister"
-        app:layout_constraintHorizontal_bias="1.3"
+        app:layout_constraintHorizontal_bias="1.1"
         app:layout_constraintStart_toStartOf="@+id/btnRegister"
         app:layout_constraintTop_toBottomOf="@+id/btnRegister" />
 
@@ -84,6 +116,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
+        android:textColor="#3F51B5"
+        android:textSize="20dp"
+        android:textStyle="bold"
         android:text="Sign In!"
         app:layout_constraintBottom_toBottomOf="@+id/textView2"
         app:layout_constraintStart_toEndOf="@+id/textView2"
