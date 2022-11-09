@@ -63,6 +63,9 @@ class CreateNoteActivity : AppCompatActivity() {
                 scheduleNotification(title,note)
             }
             if(title.isNotEmpty() && note.isNotEmpty()){
+                if(binding.etLocation.text.toString().isNotEmpty()){
+                    location=binding.etLocation.text.toString().trim()
+                }
                 noteDao.addNote(title,note,location)
                 finish()
             }

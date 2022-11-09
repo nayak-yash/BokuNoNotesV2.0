@@ -34,7 +34,35 @@ class NoteDao {
                     }
                     catch(e : Exception){
                         kotlinx.coroutines.withContext(Dispatchers.Main){
-                            Toast.makeText(null,e.message,Toast.LENGTH_SHORT).show()
+                            Toast.makeText(null,e.localizedMessage,Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fun editNote(note: Note, REQUEST_CODE: Int) {
+        GlobalScope.launch(Dispatchers.IO) {
+            val query = noteCollection
+                .whereEqualTo("userId", mAuth.currentUser?.uid)
+                .whereEqualTo("createdAt", note.createdAt)
+                .get().await()
+            if (query.documents.isNotEmpty()) {
+                for(document in query){
+                    try{
+                        if(REQUEST_CODE == 1) {
+                            noteCollection.document(document.id).update("status",if(note.status ==null) false else true).await()
+                        }
+                        else if(REQUEST_CODE == 2) {
+                            noteCollection.document(document.id).update("isPrivate", if(note.isPrivate) false else true).await()
+                        }
+                        else if(REQUEST_CODE == 3) {
+                            noteCollection.document(document.id).update("isFavorite", if(note.isFavorite) false else true).await()
+                        }
+                    }
+                    catch(e : Exception){
+                        kotlinx.coroutines.withContext(Dispatchers.Main){
+                            Toast.makeText(null,e.localizedMessage,Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
