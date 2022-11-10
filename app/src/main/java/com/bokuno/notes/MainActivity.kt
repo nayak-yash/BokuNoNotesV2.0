@@ -52,24 +52,21 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     private lateinit var binding: ActivityMainBinding
     private lateinit var mNoteDao: NoteDao
     private lateinit var noteList: ArrayList<Note>
-    private var pdfGenerator = PDFGenerator()
     private companion object{
         private const val REQUEST_CODE: Int=101
         private const val TAG="Mainxy"
     }
+    private val pdfGenerator= PDFGenerator()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        binds activity_main.xml with binding variable
         binding=ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         mNoteDao= NoteDao()
-//        open CreateNoteActivity if btnAdd is clicked
         binding.btnAdd.setOnClickListener {
             val cIntent=Intent(this,CreateNoteActivity::class.java)
             startActivity(cIntent)
         }
-//        stores items in noteList
         noteList=ArrayList()
         sharedPref= getSharedPreferences("SortPref",Context.MODE_PRIVATE)
         editor=sharedPref.edit()
@@ -102,7 +99,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         binding.searchBar.setOnQueryTextListener(this)
     }
 
-//    popup menu appear when btnSortFactor is clicked
     private fun showPopup(view : View) {
         val popup = PopupMenu(this, view)
         popup.inflate(R.menu.sort_popup_menu)
@@ -167,8 +163,11 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
                 snapshots?.let {
                     for (dc in it!!.documentChanges) {
                         val note=dc.document.toObject<Note>()
+                        Log.i(TAG,"${note.title}")
                         if(dc.type==DocumentChange.Type.ADDED) {
-                            noteList.remove(note)
+                            if(noteList.contains(note)){
+                                noteList.remove(note)
+                            }
                             noteList.add(note)
                         }
                         else if(dc.type==DocumentChange.Type.REMOVED){
@@ -247,27 +246,27 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
 //        }
         btnDelete.setOnClickListener{
             deleteItem(item)
-            dialog.hide()
+            dialog.dismiss()
         }
         btnShare.setOnClickListener{
             shareFileLink(item)
-            dialog.hide()
+            dialog.dismiss()
         }
         btnSave.setOnClickListener{
             saveAsFile(item)
-            dialog.hide()
+            dialog.dismiss()
         }
         btnStatus.setOnClickListener{
             mNoteDao.editNote(item, 1)    // 1 for changing status
-            dialog.hide()
+            dialog.dismiss()
         }
 //        btnHide.setOnClickListener{
 //            mNoteDao.editNote(item, 2)    // 2 for hiding/unhiding note
-//            dialog.hide()
+//            dialog.dismiss()
 //        }
         btnFavorite.setOnClickListener{
             mNoteDao.editNote(item, 3)    // 3 for marking note as favorite/unfavorite
-            dialog.hide()
+            dialog.dismiss()
         }
 
         dialog.show()
@@ -315,7 +314,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
                     WRITE_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                pdfGenerator.flag = "SHARE"
+                pdfGenerator.flag="SHARE"
                 pdfGenerator.createPdf(this, note, this)
                 val uri = Uri.fromFile(pdfGenerator.file)
                 val storage = FirebaseStorage.getInstance()
@@ -355,9 +354,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         }
     }
 
-    private fun deleteItem(item: Note) {
-        mNoteDao.deleteNote(item)
-    }
 
     @SuppressLint("SimpleDateFormat")
     private fun saveAsFile(item: Note) {
@@ -371,6 +367,9 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         }
     }
 
+    private fun deleteItem(item: Note) {
+        mNoteDao.deleteNote(item)
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
         grantResults: IntArray) {

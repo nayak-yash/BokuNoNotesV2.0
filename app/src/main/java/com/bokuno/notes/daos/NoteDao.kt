@@ -14,10 +14,10 @@ class NoteDao {
     val noteCollection = mDB.collection("notes")
     val mAuth = FirebaseAuth.getInstance()
     fun addNote(title: String, note: String, location: String?) {
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             val createdAt = System.currentTimeMillis()
             val note = Note(title, note, createdAt, mAuth.currentUser?.uid.toString(), location)
-            noteCollection.document().set(note)
+            noteCollection.document().set(note).await()
         }
     }
 

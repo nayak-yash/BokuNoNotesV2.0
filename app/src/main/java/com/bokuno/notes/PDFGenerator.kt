@@ -6,31 +6,25 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
 import com.bokuno.notes.databinding.PdfLayoutBinding
 import com.bokuno.notes.models.Note
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.android.gms.tasks.Task
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.UploadTask
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 
 
-class PDFGenerator {
+class PDFGenerator() {
     private lateinit var binding: PdfLayoutBinding
     private lateinit var fileOutputStream: FileOutputStream
     lateinit var file: File
-    public var flag = "SAVE"
+    var flag : String = "SAVE"
     private lateinit var context: Context
     private var TAG = "PDFxy"
 
@@ -88,21 +82,21 @@ class PDFGenerator {
     }
 
     private fun convertBitmapToPdf(bitmap: Bitmap, context: Context, note: Note) {
-
         if (flag == "SAVE") {
             val outputDir = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     .toString() + "/BokuNoNotes"
             )
-            if (!outputDir.exists())
+            if (!outputDir.exists()) {
                 outputDir.mkdirs()
-            file = File(outputDir, "${note.title}")
+            }
+            file = File(outputDir, "${note.title}.pdf")
         } else if (flag == "SHARE") {
             val outputDir = context.cacheDir // context being the Activity pointer
             file = File.createTempFile("${note.title}", ".pdf", outputDir)
             file.deleteOnExit()
         }
-        fileOutputStream = FileOutputStream(file)
+        fileOutputStream = FileOutputStream(file,false)
         val pdfDocument = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
         val page = pdfDocument.startPage(pageInfo)
@@ -111,6 +105,7 @@ class PDFGenerator {
         try {
             pdfDocument.writeTo(fileOutputStream)
             pdfDocument.close()
+            fileOutputStream.close()
             if (flag != "SHARE") {
                 Toast.makeText(context, "PDF saved successfully", Toast.LENGTH_SHORT).show()
             }
