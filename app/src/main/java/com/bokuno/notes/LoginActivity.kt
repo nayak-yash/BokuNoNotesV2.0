@@ -23,16 +23,23 @@ class LoginActivity : AppCompatActivity() {
             finish()
         }
         binding.btnLogin.setOnClickListener {
-            val email=binding.etEmail.text.toString()
-            val pass=binding.etPassword.text.toString()
+            val email=binding.etEmail.text.toString().trim()
+            val pass=binding.etPassword.text.toString().trim()
             if(email.isNotEmpty() && pass.isNotEmpty()){
+                binding.btnLogin.isClickable=false
                 mAuth.signInWithEmailAndPassword(email,pass).addOnSuccessListener {
                         val mainIntent = Intent(this, MainActivity::class.java)
                         startActivity(mainIntent)
                         finish()
                     }
                     .addOnFailureListener {
-                        Toast.makeText(this, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                        binding.btnLogin.isClickable=true
+                        val errorMessage = it.localizedMessage
+                        val cropIndex=errorMessage.indexOf('.')
+                        if(cropIndex!=-1){
+                            errorMessage.substring(0,cropIndex)
+                        }
+                        Toast.makeText(this,errorMessage, Toast.LENGTH_SHORT).show()
                         }
                     }
             else{

@@ -19,23 +19,36 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(binding.root)
         mAuth=FirebaseAuth.getInstance()
         binding.btnRegister.setOnClickListener{
-            val email=binding.etEmail.text.toString()
-            val pass=binding.etPassword.text.toString()
-            val confirmPass=binding.etPasswordConfirm.text.toString()
+            val email=binding.etEmail.text.toString().trim()
+            val pass=binding.etPassword.text.toString().trim()
+            val confirmPass=binding.etPasswordConfirm.text.toString().trim()
             if(email.isNotEmpty() && pass.isNotEmpty() && confirmPass.isNotEmpty()){
                 if(pass == confirmPass){
+                    binding.btnRegister.isClickable=false
                     mAuth.createUserWithEmailAndPassword(email,pass).addOnSuccessListener{
                             val loginIntent = Intent(this,LoginActivity::class.java)
                             startActivity(loginIntent)
                             finish()
                     }
                         .addOnFailureListener {
-                            when(it){
+                            binding.btnRegister.isClickable=true
+                            when(it) {
                                 is FirebaseAuthWeakPasswordException ->
-                            Toast.makeText(this,"Select a strong password",Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        this,
+                                        "Select a strong password",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
 
-                                else ->
-                                    Toast.makeText(this,it.localizedMessage,Toast.LENGTH_SHORT).show()
+                                else -> {
+                                    val errorMessage = it.localizedMessage
+                                    val cropIndex=errorMessage.indexOf('.')
+                                    if(cropIndex!=-1){
+                                        errorMessage.substring(0,cropIndex)
+                                    }
+                                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT)
+                                        .show()
+                                }
                             }
                         }
                 }
