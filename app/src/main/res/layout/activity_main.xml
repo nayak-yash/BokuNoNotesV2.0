@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:background="@drawable/gradient_tint">
+    android:padding="5dp"
+    android:background="@drawable/background_color_login">
 
 
     <androidx.appcompat.widget.SearchView
@@ -15,7 +16,7 @@
         android:layout_margin="10dp"
         app:queryHint="Enter the title"
         android:background="@color/white"
-        android:maxWidth="280dp"
+        android:maxWidth="250dp"
         app:layout_constraintBottom_toBottomOf="@+id/btnSortFactor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/btnSortFactor" />
