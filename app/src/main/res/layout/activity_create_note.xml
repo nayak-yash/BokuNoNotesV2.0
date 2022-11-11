@@ -56,12 +56,14 @@
             app:layout_constraintTop_toBottomOf="@+id/etTitle" />
 
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnAdd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:text="ADD"
+            android:textColor="@color/white"
+            android:background="@drawable/gradient_tint"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/datePicker"/>

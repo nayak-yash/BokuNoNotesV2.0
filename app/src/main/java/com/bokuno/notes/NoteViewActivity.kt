@@ -2,6 +2,8 @@ package com.bokuno.notes
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import androidx.core.text.bold
 import com.bokuno.notes.databinding.ActivityNoteViewBinding
 import java.text.SimpleDateFormat
 
@@ -18,15 +20,25 @@ class NoteViewActivity : AppCompatActivity() {
         val formatter = SimpleDateFormat("dd-MM-yyyy 'at' HH:mm")
         val createdAt = formatter.format(intent.getLongExtra("createdAt",0))
 
-        binding.tvTitle.text="Title : $title"
+        binding.tvTitle.text=SpannableStringBuilder()
+            .bold { append("Title : ") }
+            .append("$title")
         if(location!=null) {
-            binding.tvLocation.text = "Location : $location"
+            binding.tvLocation.text = SpannableStringBuilder()
+                .bold { append("Location : ") }
+                .append("$location")
         }
         else{
-            binding.tvLocation.text = "Location : Not Specified"
+            binding.tvLocation.text = SpannableStringBuilder()
+                .bold { append("Location : ") }
+                .append("Not Specified")
         }
-        binding.tvCreatedAt.text="Time created : $createdAt"
-        binding.tvNote.text="Note : $note"
+        binding.tvCreatedAt.text=SpannableStringBuilder()
+            .bold { append("Time Created : ") }
+            .append("$createdAt")
+        binding.tvNote.text=SpannableStringBuilder()
+            .bold { append("Note : ") }
+            .append("$note")
     }
 }
 
