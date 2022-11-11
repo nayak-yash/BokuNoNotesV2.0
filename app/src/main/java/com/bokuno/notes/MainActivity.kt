@@ -391,7 +391,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
 
 
     override fun onItemClicked(item: Note) {
-
+        val noteViewIntent=Intent(this,NoteViewActivity::class.java)
+        noteViewIntent.putExtra("title",item.title)
+        noteViewIntent.putExtra("note",item.text)
+        noteViewIntent.putExtra("createdAt",item.createdAt)
+        noteViewIntent.putExtra("location",item.location)
+        startActivity(noteViewIntent)
     }
 
     override fun onLongItemClicked(item: Note) {
