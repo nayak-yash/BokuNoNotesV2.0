@@ -4,6 +4,7 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -37,7 +38,6 @@ import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAdapter {
@@ -51,10 +51,13 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     private lateinit var mAdapter:NoteAdapter
     private lateinit var binding: ActivityMainBinding
     private lateinit var mNoteDao: NoteDao
-    private lateinit var noteList: ArrayList<Note>
+    private lateinit var tempNote :Note
+    private lateinit var noteList: MutableList<Note>
     private companion object{
         private const val REQUEST_CODE: Int=101
         private const val TAG="Mainxy"
+        private const val VIEW_PRIVATE = 202
+        private const val UNHIDE = 303
     }
     private val pdfGenerator= PDFGenerator()
 
@@ -67,11 +70,11 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             val cIntent=Intent(this,CreateNoteActivity::class.java)
             startActivity(cIntent)
         }
-        noteList=ArrayList()
+        noteList= mutableListOf()
         sharedPref= getSharedPreferences("SortPref",Context.MODE_PRIVATE)
         editor=sharedPref.edit()
-        factor = sharedPref.getString("factor","createdAt")!!
-        order = sharedPref.getInt("order", 1)
+        factor = sharedPref.getString("factor","createdAt")!!   // sorting factor can be creation time or title
+        order = sharedPref.getInt("order", 1)   // 1 for descending and 0 for ascending
 
         binding.btnSortFactor.setOnClickListener{
             showPopup(binding.btnSortFactor)
@@ -81,6 +84,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
 
         binding.btnSortOrder.setOnClickListener{
             if(order==1) {
+                order = 0
                 binding.btnSortOrder.setImageResource(R.drawable.ic_upward)
                 editor.apply {
                     putInt("order", 0)
@@ -88,13 +92,15 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
                 }
             }
             else{
+                order = 1
                 binding.btnSortOrder.setImageResource(R.drawable.ic_downward)
                 editor.apply {
                     putInt("order", 1)
                     apply()
                 }
             }
-            setUpRecyclerView()
+            noteList.reverse()
+            mAdapter.notifyDataSetChanged()
         }
         binding.searchBar.setOnQueryTextListener(this)
     }
@@ -104,21 +110,41 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         popup.inflate(R.menu.sort_popup_menu)
         popup.show()
         popup.setOnMenuItemClickListener {
+            factor = sharedPref.getString("factor","createdAt")!!
             when (it!!.itemId) {
                 R.id.btnDateCreated -> {
+                    if(factor=="createdAt"){
+                        return@setOnMenuItemClickListener true
+                    }
+                    if(order == 1){
+                        noteList.sortByDescending {it.createdAt}
+                    }
+                    else{
+                        noteList.sortBy { it.createdAt }
+                    }
+                    mAdapter.notifyDataSetChanged()
                     editor.apply{
                     putString("factor","createdAt")
                     apply()
                 }
                 }
                 R.id.btnTitle -> {
+                    if(factor=="title"){
+                        return@setOnMenuItemClickListener true
+                    }
+                    if(order == 1){
+                        noteList.sortByDescending{ it.title }
+                    }
+                    else{
+                        noteList.sortBy { it.title }
+                    }
+                    mAdapter.notifyDataSetChanged()
                     editor.apply{
                     putString("factor","title")
                     apply()
                 }
                 }
             }
-            setUpRecyclerView()
             true
 
         }
@@ -135,7 +161,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId==R.id.btnLogout){
+        if(item.itemId == R.id.btnLogout){
             Firebase.auth.signOut()
             val logoutIntent= Intent(this,LoginActivity::class.java)
             logoutIntent.flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -147,7 +173,8 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     private fun setUpRecyclerView() {
         factor = sharedPref.getString("factor","createdAt")!!
         order = sharedPref.getInt("order", 1)
-        mAdapter = NoteAdapter(noteList, this)
+        mAdapter = NoteAdapter(this)
+        mAdapter.submitList(noteList)
         binding.recyclerView.adapter = mAdapter
         binding.recyclerView.layoutManager = StaggeredGridLayoutManager(2, LinearLayoutManager.VERTICAL)
         mNoteDao.noteCollection
@@ -161,9 +188,8 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
                 }
 
                 snapshots?.let {
-                    for (dc in it!!.documentChanges) {
+                    for (dc in it.documentChanges) {
                         val note=dc.document.toObject<Note>()
-                        Log.i(TAG,"${note.title}")
                         if(dc.type==DocumentChange.Type.ADDED) {
                             if(noteList.contains(note)){
                                 noteList.remove(note)
@@ -186,7 +212,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
     override fun onQueryTextSubmit(query: String?): Boolean {
         return true
     }
-// for searching item within noteList
+    // for searching item within noteList
     override fun onQueryTextChange(search: String?): Boolean {
         noteList.clear()
         factor = sharedPref.getString("factor","createdAt")!!
@@ -218,12 +244,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         val btnDelete=dialog.findViewById<LinearLayout>(R.id.btnDelete)
         val btnShare=dialog.findViewById<LinearLayout>(R.id.btnShare)
         val btnSave=dialog.findViewById<LinearLayout>(R.id.btnSave)
-//        val btnHide=dialog.findViewById<LinearLayout>(R.id.btnHide)
+        val btnHide=dialog.findViewById<LinearLayout>(R.id.btnHide)
         val btnFavorite=dialog.findViewById<LinearLayout>(R.id.btnFavorite)
         val btnStatus=dialog.findViewById<LinearLayout>(R.id.btnStatus)
         val tvStatus=btnStatus.findViewById<TextView>(R.id.tvStatus)
         val tvFavorite=btnFavorite.findViewById<TextView>(R.id.tvFavorite)
-//        val tvHide=btnHide.findViewById<TextView>(R.id.tvHide)
+        val tvHide=btnHide.findViewById<TextView>(R.id.tvHide)
         if(item.status ==false){
             tvStatus.text="Mark as Done"
         }
@@ -238,12 +264,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             tvFavorite.text="Mark as unfavorite"
         }
 
-//        if(item.isPrivate == true){
-//            tvHide.text="Unhide"
-//        }
-//        else{
-//            tvHide.text="Hide"
-//        }
+        if(item.isPrivate == true){
+            tvHide.text="Unhide"
+        }
+        else{
+            tvHide.text="Hide"
+        }
         btnDelete.setOnClickListener{
             deleteItem(item)
             dialog.dismiss()
@@ -260,10 +286,22 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
             mNoteDao.editNote(item, 1)    // 1 for changing status
             dialog.dismiss()
         }
-//        btnHide.setOnClickListener{
-//            mNoteDao.editNote(item, 2)    // 2 for hiding/unhiding note
-//            dialog.dismiss()
-//        }
+        btnHide.setOnClickListener{
+            if(item.isPrivate){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val km = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+                    if (km.isKeyguardSecure) {
+                        val authIntent = km.createConfirmDeviceCredentialIntent(null, null)
+                        tempNote=item
+                        startActivityForResult(authIntent, UNHIDE)
+                    }
+                }
+            }
+            else{
+                mNoteDao.editNote(item, 2)
+            }
+            dialog.dismiss()
+        }
         btnFavorite.setOnClickListener{
             mNoteDao.editNote(item, 3)    // 3 for marking note as favorite/unfavorite
             dialog.dismiss()
@@ -389,13 +427,43 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener,INoteAd
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VIEW_PRIVATE) {
+            if (resultCode == RESULT_OK) {
+                noteViewIntent(tempNote)
+            }
+        }
+        else if(requestCode == UNHIDE){
+            if(resultCode == RESULT_OK){
+                mNoteDao.editNote(tempNote,2)
+            }
+        }
+    }
+
 
     override fun onItemClicked(item: Note) {
-        val noteViewIntent=Intent(this,NoteViewActivity::class.java)
-        noteViewIntent.putExtra("title",item.title)
-        noteViewIntent.putExtra("note",item.text)
-        noteViewIntent.putExtra("createdAt",item.createdAt)
-        noteViewIntent.putExtra("location",item.location)
+        if (item.isPrivate) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val km = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+                if (km.isKeyguardSecure) {
+                    val authIntent = km.createConfirmDeviceCredentialIntent(null, null)
+                    tempNote = item
+                    startActivityForResult(authIntent, VIEW_PRIVATE)
+                }
+            }
+        }
+        else{
+            noteViewIntent(item)
+        }
+    }
+
+    private fun noteViewIntent(item: Note) {
+        val noteViewIntent = Intent(this, NoteViewActivity::class.java)
+        noteViewIntent.putExtra("title", item.title)
+        noteViewIntent.putExtra("note", item.text)
+        noteViewIntent.putExtra("createdAt", item.createdAt)
+        noteViewIntent.putExtra("location", item.location)
         startActivity(noteViewIntent)
     }
 
