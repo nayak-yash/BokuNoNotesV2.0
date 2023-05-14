@@ -16,7 +16,9 @@ import com.bokuno.notes.models.Note
 import java.text.SimpleDateFormat
 
 
-class NoteAdapter(private val listener:INoteAdapter): ListAdapter<Note, NoteAdapter.NoteViewHolder>(ComparatorDiffUtil()) {
+class NoteAdapter(
+    private val onItemClicked:(Note) -> Unit,
+    private val onLongItemClicked:(Note) -> Unit): ListAdapter<Note, NoteAdapter.NoteViewHolder>(ComparatorDiffUtil()) {
 
     inner class NoteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val noteText: TextView = itemView.findViewById(R.id.tvNote)
@@ -29,10 +31,10 @@ class NoteAdapter(private val listener:INoteAdapter): ListAdapter<Note, NoteAdap
 
         fun bind(model: Note) {
             itemView.setOnClickListener{
-                listener.onItemClicked(model)
+                onItemClicked(model)
             }
             itemView.setOnLongClickListener{
-                listener.onLongItemClicked(model)
+                onLongItemClicked(model)
                 return@setOnLongClickListener true
             }
             if(model.isPrivate){
@@ -96,10 +98,6 @@ class NoteAdapter(private val listener:INoteAdapter): ListAdapter<Note, NoteAdap
         val item = getItem(position)
         holder.bind(item)
     }
-}
-interface INoteAdapter{
-    fun onItemClicked(item:Note)
-    fun onLongItemClicked(item:Note)
 }
 class ComparatorDiffUtil : DiffUtil.ItemCallback<Note>() {
     override fun areItemsTheSame(oldItem: Note, newItem: Note): Boolean {

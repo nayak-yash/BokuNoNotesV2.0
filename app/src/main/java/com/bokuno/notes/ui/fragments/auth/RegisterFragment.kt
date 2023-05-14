@@ -1,23 +1,39 @@
-package com.bokuno.notes
+package com.bokuno.notes.ui.fragments.auth
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
-import com.bokuno.notes.databinding.ActivityRegisterBinding
+import androidx.navigation.fragment.findNavController
+import com.bokuno.notes.R
+import com.bokuno.notes.databinding.FragmentRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import dagger.hilt.android.AndroidEntryPoint
 
-class RegisterActivity : AppCompatActivity() {
 
-    private lateinit var binding:ActivityRegisterBinding
+@AndroidEntryPoint
+class RegisterFragment : Fragment() {
+
+    private var _binding: FragmentRegisterBinding? = null
+    private val binding get() = _binding!!
     private lateinit var mAuth: FirebaseAuth
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding=ActivityRegisterBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        mAuth=FirebaseAuth.getInstance()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        _binding = FragmentRegisterBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        mAuth = FirebaseAuth.getInstance()
         binding.btnRegister.setOnClickListener{
             val email=binding.etEmail.text.toString().trim()
             val pass=binding.etPassword.text.toString().trim()
@@ -26,16 +42,14 @@ class RegisterActivity : AppCompatActivity() {
                 if(pass == confirmPass){
                     binding.btnRegister.isClickable=false
                     mAuth.createUserWithEmailAndPassword(email,pass).addOnSuccessListener{
-                            val loginIntent = Intent(this,LoginActivity::class.java)
-                            startActivity(loginIntent)
-                            finish()
+                        findNavController().navigate(R.id.action_registerFragment_to_mainFragment)
                     }
                         .addOnFailureListener {
                             binding.btnRegister.isClickable=true
                             when(it) {
                                 is FirebaseAuthWeakPasswordException ->
                                     Toast.makeText(
-                                        this,
+                                        activity,
                                         "Select a strong password",
                                         Toast.LENGTH_SHORT
                                     ).show()
@@ -46,22 +60,28 @@ class RegisterActivity : AppCompatActivity() {
                                     if(cropIndex!=-1){
                                         errorMessage.substring(0,cropIndex)
                                     }
-                                    Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT)
+                                    Toast.makeText(activity, errorMessage, Toast.LENGTH_SHORT)
                                         .show()
                                 }
                             }
                         }
                 }
                 else{
-                    Toast.makeText(this,"Confirm password and password are not same",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity,"Confirm password and password are not same", Toast.LENGTH_SHORT).show()
                 }
             }
             else{
-                Toast.makeText(this,"Fields are not complete",Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity,"Fields are not complete", Toast.LENGTH_SHORT).show()
             }
         }
+
         binding.btnSignIn.setOnClickListener {
-            finish()
+            findNavController().popBackStack()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
