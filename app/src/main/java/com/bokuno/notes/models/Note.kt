@@ -10,7 +10,7 @@ data class Note(
     var createdAt:Long?=null,
     val userId:String?=null,
     @PrimaryKey(autoGenerate = true)
-    val noteId:Long,
+    val noteId:Long?=null,
     var location:String?=null,
     var status:Boolean?=null,              /* true -> done,  false -> todo , null -> default */
     @field:JvmField // use this annotation if your Boolean field is prefixed with 'is'

@@ -101,7 +101,7 @@ class NoteAdapter(
 }
 class ComparatorDiffUtil : DiffUtil.ItemCallback<Note>() {
     override fun areItemsTheSame(oldItem: Note, newItem: Note): Boolean {
-        return oldItem.createdAt == newItem.createdAt
+        return oldItem.noteId == newItem.noteId
     }
 
     override fun areContentsTheSame(oldItem: Note, newItem: Note): Boolean {

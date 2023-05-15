@@ -1,43 +1,34 @@
 package com.bokuno.notes.ui.fragments.notes
 
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-import android.annotation.SuppressLint
-import android.app.Dialog
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Context.KEYGUARD_SERVICE
-import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.graphics.Color.TRANSPARENT
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
-import androidx.lifecycle.Observer
 import android.net.NetworkCapabilities
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
+import com.google.gson.Gson
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.bokuno.notes.NoteAdapter
-import com.bokuno.notes.PDFGenerator
+import com.bokuno.notes.utils.PDFGenerator
 import com.bokuno.notes.R
 import com.bokuno.notes.databinding.FragmentMainBinding
 import com.bokuno.notes.models.Note
-import com.bokuno.notes.utils.Constants.Companion.SEARCH_NEWS_TIME_DELAY
+import com.bokuno.notes.utils.Constants.Companion.SEARCH_NOTES_TIME_DELAY
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
 class MainFragment : Fragment() {
@@ -48,8 +39,6 @@ class MainFragment : Fragment() {
     private var order : Int =0
     private lateinit var mAdapter: NoteAdapter
     private lateinit var tempNote :Note
-    private lateinit var noteList: MutableList<Note>
-    private lateinit var searchList: MutableList<Note>
     private companion object{
         private const val REQUEST_CODE: Int=101
         private const val TAG="Mainxy"
@@ -71,20 +60,22 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setUpRecyclerView()
-        binding.btnAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_mainFragment_to_noteFragment)
-        }
         sharedPref= activity!!.getSharedPreferences("SortPref", Context.MODE_PRIVATE)
         editor=sharedPref.edit()
         factor = sharedPref.getString("factor","createdAt")!!   // sorting factor can be creation time or title
         order = sharedPref.getInt("order", 1)   // 1 for descending and 0 for ascending
 
+        setUpRecyclerView()
+
+        binding.btnAdd.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_noteFragment)
+        }
+
         binding.btnSortFactor.setOnClickListener{
             showPopup(binding.btnSortFactor)
         }
 
-        binding.btnSortOrder.setImageResource(if (order ==1) R.drawable.ic_downward else R.drawable.ic_upward)
+        binding.btnSortOrder.setImageResource(if (order == 1) R.drawable.ic_downward else R.drawable.ic_upward)
 
         binding.btnSortOrder.setOnClickListener{
             if(order==1) {
@@ -103,13 +94,13 @@ class MainFragment : Fragment() {
                     apply()
                 }
             }
-            noteList.reverse()
+            updateRecyclerView(factor,order)
         }
         bindSearchBar()
     }
 
     private fun bindSearchBar() {
-        noteList = ArrayList<Note>()
+
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String): Boolean {
                 return false
@@ -119,22 +110,20 @@ class MainFragment : Fragment() {
             override fun onQueryTextChange(query: String): Boolean {
                     job?.cancel()
                     job = MainScope().launch {
-                        delay(SEARCH_NEWS_TIME_DELAY)
-                        query?.let {
-                            if(query.isNotEmpty()) {
-                                noteList.clear()
-                                for(note in noteList){
-                                    if(note.title!!.contains(query)){
-                                        searchList.add(note)
-                                    }
-                                }
+                        delay(SEARCH_NOTES_TIME_DELAY)
+                        if(query.isNotEmpty()) {
+                            noteViewModel.getSearchNotes(query).observe(viewLifecycleOwner){
+                                mAdapter.submitList(it)
                             }
-                            noteList = searchList
+                        }
+                        else{
+                            updateRecyclerView(factor,order)
                         }
                     }
                 return false
             }
         })
+
     }
 
     private fun showPopup(view : View) {
@@ -148,31 +137,23 @@ class MainFragment : Fragment() {
                     if(factor=="createdAt"){
                         return@setOnMenuItemClickListener true
                     }
-                    if(order == 1){
-                        noteList.sortByDescending {it.createdAt}
-                    }
-                    else{
-                        noteList.sortBy { it.createdAt }
-                    }
                     editor.apply{
                         putString("factor","createdAt")
                         apply()
                     }
+                    factor="createdAt"
+                    updateRecyclerView(factor,order)
                 }
                 R.id.btnTitle -> {
                     if(factor=="title"){
                         return@setOnMenuItemClickListener true
                     }
-                    if(order == 1){
-                        noteList.sortByDescending{ it.title }
-                    }
-                    else{
-                        noteList.sortBy { it.title }
-                    }
                     editor.apply{
                         putString("factor","title")
                         apply()
                     }
+                    factor="title"
+                    updateRecyclerView(factor,order)
                 }
             }
             true
@@ -180,46 +161,35 @@ class MainFragment : Fragment() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        setUpRecyclerView()
-    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
     private fun setUpRecyclerView() {
-
-        noteViewModel.getAllNotes().observe(viewLifecycleOwner) {
-            noteList = it
-            factor = sharedPref.getString("factor", "createdAt")!!
-            order = sharedPref.getInt("order", 1)
-            mAdapter = NoteAdapter(::onItemClicked, ::onLongItemClicked)
-            sortList(noteList, order, factor)
-            mAdapter.submitList(noteList)
-            binding.recyclerView.adapter = mAdapter
+        mAdapter = NoteAdapter(::onItemClicked, ::onLongItemClicked)
+        binding.recyclerView.apply {
+            adapter = mAdapter
             binding.recyclerView.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-        }
+                GridLayoutManager(context,2)
 
+        }
+        updateRecyclerView(factor,order)
     }
 
-    private fun sortList(noteList: MutableList<Note>, order: Int, factor: String) {
-        if (factor == "createdAt") {
-            if (order == 1) {
-                noteList.sortByDescending { it.createdAt }
-            }
-            else {
-                noteList.sortBy { it.createdAt }
+    private fun updateRecyclerView(factor: String, order: Int) {
+        if(factor == "title"){
+            noteViewModel.getNotesSortedByTitle(order).observe(viewLifecycleOwner) {
+                it?.let {
+                    mAdapter.submitList(it)
+                }
             }
         }
         else{
-            if (order == 1) {
-                noteList.sortByDescending { it.title }
-            }
-            else {
-                noteList.sortBy { it.title }
+            noteViewModel.getNotesSortedByDate(order).observe(viewLifecycleOwner) {
+                it?.let {
+                    mAdapter.submitList(it)
+                }
             }
         }
     }
@@ -362,7 +332,9 @@ class MainFragment : Fragment() {
     }
 
     private fun noteViewIntent(item: Note) {
-        findNavController().navigate(R.id.action_mainFragment_to_noteFragment)
+        val bundle = Bundle()
+        bundle.putString("note",Gson().toJson(item))
+        findNavController().navigate(R.id.action_mainFragment_to_noteFragment,bundle)
     }
 
     fun onLongItemClicked(item: Note) {

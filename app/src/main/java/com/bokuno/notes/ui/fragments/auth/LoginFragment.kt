@@ -12,13 +12,15 @@ import com.bokuno.notes.R
 import com.bokuno.notes.databinding.FragmentLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var mAuth: FirebaseAuth
+    @Inject
+    lateinit var mAuth: FirebaseAuth
 
 
     override fun onCreateView(
@@ -32,7 +34,6 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mAuth = FirebaseAuth.getInstance()
         if(mAuth.currentUser!=null){
             findNavController().navigate(R.id.action_loginFragment_to_mainFragment)
         }
