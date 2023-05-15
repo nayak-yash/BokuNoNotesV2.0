@@ -59,8 +59,6 @@ class NoteFragment : Fragment() {
     @Inject
     lateinit var mAuth: FirebaseAuth
 
-    private lateinit var timePickerDialog: TimePickerDialog
-
     companion object{
         const val PERMISSION_ID=101
         var TAG = "xyz"
@@ -179,6 +177,7 @@ class NoteFragment : Fragment() {
             }
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.M)
     private fun scheduleNotification(title : String, note : String) {
         val intent = Intent(context, Notification::class.java)

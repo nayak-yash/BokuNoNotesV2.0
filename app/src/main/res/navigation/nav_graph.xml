@@ -45,5 +45,16 @@
             android:id="@+id/action_mainFragment_to_noteFragment"
             app:destination="@id/noteFragment"
             app:popUpTo="@id/mainFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_bottomSheetFragment"
+            app:destination="@id/bottomSheetFragment" />
     </fragment>
+    <dialog
+        android:id="@+id/bottomSheetFragment"
+        android:name="com.bokuno.notes.ui.fragments.notes.BottomSheetFragment"
+        android:label="BottomSheetFragment" >
+        <action
+            android:id="@+id/action_bottomSheetFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </dialog>
 </navigation>

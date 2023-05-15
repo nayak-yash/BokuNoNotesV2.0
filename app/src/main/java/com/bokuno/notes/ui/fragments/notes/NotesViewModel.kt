@@ -1,8 +1,6 @@
 package com.bokuno.notes.ui.fragments.notes
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import androidx.lifecycle.*
 import com.bokuno.notes.models.Note
 import com.bokuno.notes.repository.NotesRepository
@@ -25,6 +23,8 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
     private val context = getApplication<Application>().applicationContext
 
     private val _response = MutableLiveData<String>()
+    val response: LiveData<String>
+        get() = _response
 
     fun addNote(note: Note) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -52,9 +52,6 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
 
     fun getSearchNotes(query: String) = notesRepo.getSearchNotes(query)
 
-    val response: LiveData<String>
-        get() = _response
-
     fun sendMessage(helpRequest: HelpRequest): Boolean {
         if(!InternetConnection.checkForInternet(context)){
             return false
@@ -71,7 +68,5 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
         }
         return true
     }
-
-
 
 }
