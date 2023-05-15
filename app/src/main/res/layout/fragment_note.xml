@@ -64,31 +64,33 @@
             app:layout_constraintRight_toLeftOf="@id/ivHelp"
             app:layout_constraintLeft_toLeftOf="parent" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/ivHelp"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginLeft="16dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginLeft="32dp"
             android:layout_marginRight="16dp"
             android:layout_marginBottom="10dp"
             app:layout_constraintBottom_toBottomOf="@id/etChatAI"
             app:layout_constraintRight_toRightOf="parent"
             app:srcCompat="@drawable/ic_help" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/ivBack"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:background="@null"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
             android:layout_marginLeft="16dp"
             app:srcCompat="@drawable/ic_back" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/ivSubmit"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:background="@null"
             app:srcCompat="@drawable/ic_done"
             app:layout_constraintLeft_toLeftOf="@id/ivLocation"
             app:layout_constraintTop_toTopOf="parent"
