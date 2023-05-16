@@ -98,20 +98,22 @@
             android:layout_marginRight="16dp"
             android:layout_marginLeft="48dp" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/ivLocation"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:background="@null"
             app:srcCompat="@drawable/share_location"
             app:layout_constraintLeft_toLeftOf="@id/ivAlarm"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
             android:layout_marginLeft="48dp"/>
 
-        <ImageView
+        <ImageButton
             android:id="@+id/ivAlarm"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:background="@null"
             app:srcCompat="@drawable/ic_alarm"
             app:layout_constraintLeft_toLeftOf="@id/ivBack"
             app:layout_constraintTop_toTopOf="parent"
