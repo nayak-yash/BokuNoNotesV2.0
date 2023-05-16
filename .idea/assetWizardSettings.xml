@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/hide_source/baseline_hide_source_24.xml" />
+                                      <entry key="url" value="file:/$USER_HOME$/AppData/Local/Android/Sdk/icons/material/materialicons/visibility/baseline_visibility_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -34,7 +34,7 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="232323" />
-                            <entry key="outputName" value="ic_unsee" />
+                            <entry key="outputName" value="ic_visible" />
                             <entry key="sourceFile" value="C:\Users\shark\AndroidStudioProjects\BokuNoNotes" />
                           </map>
                         </option>

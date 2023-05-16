@@ -1,16 +1,13 @@
 package com.bokuno.notes.ui.fragments.notes
 
 import android.app.Activity
-import android.app.KeyguardManager
 import android.content.Context
-import android.content.Context.KEYGUARD_SERVICE
-import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.*
-import com.google.gson.Gson
+import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -19,7 +16,10 @@ import com.bokuno.notes.NoteAdapter
 import com.bokuno.notes.R
 import com.bokuno.notes.databinding.FragmentMainBinding
 import com.bokuno.notes.models.Note
+import com.bokuno.notes.utils.BiometricAuthListener
+import com.bokuno.notes.utils.BiometricUtils
 import com.bokuno.notes.utils.Constants.Companion.SEARCH_NOTES_TIME_DELAY
+import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -27,9 +27,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainFragment : Fragment() {
+class MainFragment : Fragment(), BiometricAuthListener {
 
-    private lateinit var tempNote: Note
+    private var tempNote: Note? = null
     private lateinit var sharedPref: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
     private lateinit var factor : String
@@ -197,13 +197,17 @@ class MainFragment : Fragment() {
 
      private fun onItemClicked(item: Note) {
         if (item.isPrivate) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val km = activity!!.getSystemService(KEYGUARD_SERVICE) as KeyguardManager
-                if (km.isKeyguardSecure) {
-                    val authIntent = km.createConfirmDeviceCredentialIntent(null, null)
-                    tempNote = item
-                    startActivityForResult(authIntent, VIEW_PRIVATE)
-                }
+            if (BiometricUtils.isBiometricReady(context!!)) {
+                tempNote=item
+                BiometricUtils.showBiometricPrompt(
+                    activity = activity as AppCompatActivity,
+                    listener = this,
+                    cryptoObject = null,
+                )
+            }
+            else {
+                Toast.makeText(activity, "No biometric feature perform on this device", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
         else{
@@ -211,27 +215,30 @@ class MainFragment : Fragment() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VIEW_PRIVATE) {
-            if (resultCode == Activity.RESULT_OK) {
-                noteViewIntent(tempNote)
-            }
-        }
+    override fun onBiometricAuthenticateError(error: Int, errMsg: String) {
+        tempNote = null
+        Toast.makeText(context, "$errMsg", Toast.LENGTH_SHORT)
+            .show()
+    }
+
+    override fun onBiometricAuthenticateFailed() {
+        tempNote = null
+    }
+
+    override fun onBiometricAuthenticateSuccess(result: BiometricPrompt.AuthenticationResult) {
+        tempNote?.let { noteViewIntent(it) }
     }
 
     private fun noteViewIntent(item: Note) {
         val bundle = Bundle()
         bundle.putString("note",Gson().toJson(item))
         findNavController().navigate(R.id.action_mainFragment_to_noteFragment,bundle)
-
     }
 
     private fun onLongItemClicked(item: Note) {
         val bundle = Bundle()
         bundle.putString("note",Gson().toJson(item))
         findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment,bundle)
-
     }
 
 }

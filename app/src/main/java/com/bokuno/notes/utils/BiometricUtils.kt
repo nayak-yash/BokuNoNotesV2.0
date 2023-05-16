@@ -7,7 +7,6 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import dagger.hilt.android.AndroidEntryPoint
 
 object BiometricUtils {
 
@@ -52,6 +51,7 @@ object BiometricUtils {
 
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
+                listener.onBiometricAuthenticateFailed()
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -91,5 +91,5 @@ interface BiometricAuthListener {
 
     fun onBiometricAuthenticateError(error: Int,errMsg: String)
     fun onBiometricAuthenticateSuccess(result: BiometricPrompt.AuthenticationResult)
-
+    fun onBiometricAuthenticateFailed()
 }

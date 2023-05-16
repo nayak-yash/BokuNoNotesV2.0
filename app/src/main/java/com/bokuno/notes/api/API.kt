@@ -1,6 +1,5 @@
 package com.bokuno.notes.api
 
-import com.bokuno.notes.models.HelpRequest
 import com.bokuno.notes.models.HelpResponse
 import okhttp3.RequestBody
 import retrofit2.http.Body
@@ -14,5 +13,4 @@ interface API {
         @Header("Content-Type") contentType: String,
         @Header("Authorization") authorization: String,
         @Body requestBody: RequestBody) : HelpResponse
-
 }

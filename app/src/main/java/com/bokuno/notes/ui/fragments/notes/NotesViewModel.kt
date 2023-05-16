@@ -1,6 +1,8 @@
 package com.bokuno.notes.ui.fragments.notes
 
 import android.app.Application
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.*
 import com.bokuno.notes.models.Note
 import com.bokuno.notes.repository.NotesRepository
@@ -19,6 +21,7 @@ import okhttp3.RequestBody
 class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
                                          application: Application
 ) : AndroidViewModel(application){
+
 
     private val context = getApplication<Application>().applicationContext
 
@@ -64,9 +67,13 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
         ))
         viewModelScope.launch {
             val response = notesRepo.getPrompt(contentType,authorization,requestBody)
-            _response.value = response.choices.first().text
+            if(response != null){
+                _response.value = response.choices.first().text
+            }
+            else{
+                Toast.makeText(context,"No response from Server",Toast.LENGTH_SHORT).show()
+            }
         }
         return true
     }
-
 }

@@ -2,25 +2,23 @@ package com.bokuno.notes.ui.fragments.notes
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.bokuno.notes.R
 import com.bokuno.notes.databinding.FragmentBottomSheetBinding
 import com.bokuno.notes.models.Note
-import com.bokuno.notes.utils.BiometricAuthListener
-import com.bokuno.notes.utils.BiometricUtils
 import com.bokuno.notes.utils.InternetConnection
 import com.bokuno.notes.utils.PDFGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -29,8 +27,9 @@ import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener {
+class BottomSheetFragment() : BottomSheetDialogFragment() {
 
+    private lateinit var mHostActivity: Activity
     private lateinit var tempNote: Note
     private val noteViewModel by viewModels<NotesViewModel>()
     private lateinit var binding: FragmentBottomSheetBinding
@@ -69,7 +68,6 @@ class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener 
         val btnStatus = binding.btnStatus
         val tvStatus = binding.tvStatus
         val tvFavorite =  binding.tvFavorite
-        val tvHide = binding.tvHide
         if(item.status == false){
             tvStatus.text="Mark as Done"
         }
@@ -85,10 +83,7 @@ class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener 
         }
 
         if(item.isPrivate){
-            tvHide.text="Unhide"
-        }
-        else{
-            tvHide.text="Hide"
+            btnHide.visibility = View.GONE
         }
         btnDelete.setOnClickListener{
             noteViewModel.deleteNote(item)
@@ -109,22 +104,8 @@ class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener 
             dismiss()
         }
         btnHide.setOnClickListener{
-            if(item.isPrivate){
-                if (BiometricUtils.isBiometricReady(activity!!)) {
-                    BiometricUtils.showBiometricPrompt(
-                        activity = activity as AppCompatActivity,
-                        listener = this,
-                        cryptoObject = null,
-                    )
-                } else {
-                    Toast.makeText(activity, "No biometric feature perform on this device", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            }
-            else{
-                item.isPrivate = true
-                noteViewModel.updateNote(item)
-            }
+            item.isPrivate = true
+            noteViewModel.updateNote(item)
             dismiss()
         }
         btnFavorite.setOnClickListener{
@@ -132,6 +113,12 @@ class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener 
             noteViewModel.updateNote(item)
             dismiss()
         }
+    }
+
+
+    override fun onAttach(activity: Activity) {
+        super.onAttach(activity)
+        mHostActivity = activity
     }
 
 
@@ -239,15 +226,5 @@ class BottomSheetFragment() : BottomSheetDialogFragment(),BiometricAuthListener 
     private fun setInitialData() {
         val jsonNote = arguments?.getString("note")
         item = Gson().fromJson(jsonNote, Note::class.java)
-    }
-
-    override fun onBiometricAuthenticateError(error: Int, errMsg: String) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onBiometricAuthenticateSuccess(result: BiometricPrompt.AuthenticationResult) {
-        item.isPrivate = false
-        Log.i(TAG,item.toString())
-        noteViewModel.updateNote(item)
     }
 }

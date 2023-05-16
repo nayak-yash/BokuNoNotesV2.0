@@ -51,6 +51,7 @@ class NoteFragment : Fragment() {
     private var minute: Int = 0
     private var _binding: FragmentNoteBinding? = null
     private val binding get() = _binding!!
+    private var hide : Boolean = false
     private val noteViewModel by viewModels<NotesViewModel>()
     private var editnote: Note? = null
     private var isScheduled: Boolean = false
@@ -79,6 +80,11 @@ class NoteFragment : Fragment() {
     }
 
     private fun bindObserver() {
+        if(editnote == null || !editnote!!.isPrivate){
+            binding.ivUnhide.visibility = View.INVISIBLE
+            binding.ivUnhide.isClickable = false
+        }
+
         binding.ivLocation.setOnClickListener{
             getCurrentLocation()
         }
@@ -102,6 +108,7 @@ class NoteFragment : Fragment() {
                 if(editnote != null){
                     editnote!!.title = title
                     editnote!!.text = note
+                    editnote!!.isPrivate = hide
                     noteViewModel.updateNote(editnote!!)
                 }
                 else{
@@ -121,6 +128,12 @@ class NoteFragment : Fragment() {
             }else{
                 Toast.makeText(activity,"Fill the note",Toast.LENGTH_SHORT).show()
             }
+        }
+
+        binding.ivUnhide.setOnClickListener {
+            hide = false
+            binding.ivUnhide.visibility = View.INVISIBLE
+            binding.ivUnhide.isClickable = false
         }
 
 
@@ -146,7 +159,7 @@ class NoteFragment : Fragment() {
         }
         noteViewModel.response.observe(viewLifecycleOwner){
             it?.let{
-                binding.etNote.text = binding.etNote.text.append('\n').append(it)
+                binding.etNote.text = binding.etNote.text.append(it)
             }
         }
     }
@@ -171,6 +184,7 @@ class NoteFragment : Fragment() {
         val jsonNote = arguments?.getString("note")
         if (jsonNote != null) {
             editnote = Gson().fromJson<Note>(jsonNote, Note::class.java)
+            hide = editnote!!.isPrivate
             editnote?.let {
                 binding.etTitle.setText(it.title)
                 binding.etNote.setText(it.text)

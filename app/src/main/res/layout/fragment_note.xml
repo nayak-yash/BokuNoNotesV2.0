@@ -2,7 +2,7 @@
 
 
 <androidx.constraintlayout.widget.ConstraintLayout
- xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -115,11 +115,22 @@
             android:layout_height="32dp"
             android:background="@null"
             app:srcCompat="@drawable/ic_alarm"
+            app:layout_constraintLeft_toLeftOf="@id/ivUnhide"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginLeft="48dp" />
+
+        <ImageButton
+            android:id="@+id/ivUnhide"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@null"
+            app:srcCompat="@drawable/ic_visible"
             app:layout_constraintLeft_toLeftOf="@id/ivBack"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
-            android:layout_marginLeft="264dp" />
+            android:layout_marginLeft="216dp"
+            />
 
 
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
