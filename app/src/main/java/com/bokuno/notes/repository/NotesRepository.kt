@@ -3,10 +3,10 @@ package com.bokuno.notes.repository
 import androidx.lifecycle.LiveData
 import com.bokuno.notes.api.API
 import com.bokuno.notes.db.NotesDB
-import com.bokuno.notes.models.HelpRequest
 import com.bokuno.notes.models.HelpResponse
 import com.bokuno.notes.models.Note
 import okhttp3.RequestBody
+import retrofit2.Response
 import javax.inject.Inject
 
 class NotesRepository @Inject constructor(private val db: NotesDB, private val api: API) {
@@ -23,5 +23,5 @@ class NotesRepository @Inject constructor(private val db: NotesDB, private val a
 
     fun getSearchNotes(query: String): LiveData<List<Note>> = db.getNoteDao().getSearchNotes(query)
 
-    suspend fun getPrompt(contentType: String, authorization: String, requestBody: RequestBody): HelpResponse = api.getPrompt(contentType,authorization,requestBody)
+    suspend fun getPrompt(contentType: String, authorization: String, requestBody: RequestBody): Response<HelpResponse> = api.getPrompt(contentType,authorization,requestBody)
 }

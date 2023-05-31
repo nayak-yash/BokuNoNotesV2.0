@@ -9,13 +9,16 @@ import com.bokuno.notes.repository.NotesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import com.bokuno.notes.models.HelpRequest
+import com.bokuno.notes.models.HelpResponse
 import com.bokuno.notes.utils.Constants.Companion.API_KEY
 import com.bokuno.notes.utils.InternetConnection
+import com.bokuno.notes.utils.NetworkResult
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
 import okhttp3.RequestBody
+import org.json.JSONObject
 
 @HiltViewModel
 class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
@@ -25,9 +28,10 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
 
     private val context = getApplication<Application>().applicationContext
 
-    private val _response = MutableLiveData<String>()
-    val response: LiveData<String>
-        get() = _response
+    private val _statusLiveData = MutableLiveData<NetworkResult<HelpResponse>>()
+    val statusLiveData: LiveData<NetworkResult<HelpResponse>>
+        get() = _statusLiveData
+
 
     fun addNote(note: Note) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -55,25 +59,29 @@ class NotesViewModel @Inject constructor(private val notesRepo: NotesRepository,
 
     fun getSearchNotes(query: String) = notesRepo.getSearchNotes(query)
 
-    fun sendMessage(helpRequest: HelpRequest): Boolean {
+    fun sendMessage(helpRequest: HelpRequest) {
         if(!InternetConnection.checkForInternet(context)){
-            return false
+            _statusLiveData.postValue(NetworkResult.Error("No internet connection"))
         }
-        val contentType = "application/json"
-        val authorization = "Bearer $API_KEY"
-        val requestBody = RequestBody.create(MediaType.parse(contentType),
-        Gson().toJson(
-            helpRequest
-        ))
-        viewModelScope.launch {
-            val response = notesRepo.getPrompt(contentType,authorization,requestBody)
-            if(response != null){
-                _response.value = response.choices.first().text
-            }
-            else{
-                Toast.makeText(context,"No response from Server",Toast.LENGTH_SHORT).show()
+        else{
+            _statusLiveData.postValue(NetworkResult.Loading())
+            val contentType = "application/json"
+            val authorization = "Bearer $API_KEY"
+            val requestBody = RequestBody.create(MediaType.parse(contentType),
+            Gson().toJson(
+                helpRequest
+            ))
+            viewModelScope.launch {
+                val response = notesRepo.getPrompt(contentType,authorization,requestBody)
+                if (response.isSuccessful && response.body() != null) {
+                    _statusLiveData.postValue(NetworkResult.Success(response.body()!!))
+                } else if (response.errorBody() != null) {
+                    val errorObj = JSONObject(response.errorBody()!!.charStream().readText())
+                    _statusLiveData.postValue(NetworkResult.Error(errorObj.getString("message")))
+                } else {
+                    _statusLiveData.postValue(NetworkResult.Error("Something Went Wrong"))
+                }
             }
         }
-        return true
     }
 }

@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.bokuno.notes.*
@@ -33,6 +34,7 @@ import com.bokuno.notes.notif.messageExtra
 import com.bokuno.notes.notif.notificationID
 import com.bokuno.notes.notif.titleExtra
 import com.bokuno.notes.utils.Constants
+import com.bokuno.notes.utils.NetworkResult
 import com.google.android.gms.location.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
@@ -72,6 +74,7 @@ class NoteFragment : Fragment() {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setInitialData()
@@ -79,11 +82,14 @@ class NoteFragment : Fragment() {
         bindObserver()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun bindObserver() {
         if(editnote == null || !editnote!!.isPrivate){
             binding.ivUnhide.visibility = View.INVISIBLE
             binding.ivUnhide.isClickable = false
         }
+
+        binding.progressBar.isVisible = false
 
         binding.ivLocation.setOnClickListener{
             getCurrentLocation()
@@ -139,27 +145,34 @@ class NoteFragment : Fragment() {
 
         var job: Job? = null
         binding.ivHelp.setOnClickListener {
-                job?.cancel()
-                job = MainScope().launch {
-                    delay(Constants.SEARCH_NOTES_TIME_DELAY)
-                    val help = binding.etChatAI.text.toString()
-                    if(help.isNotEmpty()){
-                        val helpRequest = HelpRequest(prompt = help)
-                        if(noteViewModel.sendMessage(helpRequest)){
-                            binding.etChatAI.text.clear()
+            job?.cancel()
+            job = MainScope().launch {
+                delay(Constants.SEARCH_NOTES_TIME_DELAY)
+                val help = binding.etChatAI.text.toString()
+                if(help.isNotEmpty()){
+                    val helpRequest = HelpRequest(prompt = help)
+                    noteViewModel.sendMessage(helpRequest)
+                    binding.etChatAI.text.clear()
+                    noteViewModel.statusLiveData.observe(viewLifecycleOwner){
+                        when (it) {
+                            is NetworkResult.Success -> {
+                                binding.progressBar.isVisible = false
+                                val answer = it.data?.choices?.first()?.text!!
+                                binding.etNote.text = binding.etNote.text.append(answer)
+                            }
+                            is NetworkResult.Error -> {
+                                binding.progressBar.isVisible = false
+                                Toast.makeText(activity, it.message.toString(), Toast.LENGTH_SHORT).show()
+                            }
+                            is NetworkResult.Loading -> {
+                                binding.progressBar.isVisible = true
+                            }
                         }
-                        else{
-                            Toast.makeText(activity,"Network Failure",Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    else{
-                        Toast.makeText(activity,"Please fill the query!!",Toast.LENGTH_SHORT).show()
                     }
                 }
-        }
-        noteViewModel.response.observe(viewLifecycleOwner){
-            it?.let{
-                binding.etNote.text = binding.etNote.text.append(it)
+                else{
+                    Toast.makeText(activity,"Please fill the query!!",Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

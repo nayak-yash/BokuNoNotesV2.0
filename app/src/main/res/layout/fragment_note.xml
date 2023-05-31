@@ -55,7 +55,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
-            android:maxLength="25"
+            android:maxLength="35"
             android:layout_marginRight="48dp"
             android:hint="Ask for help"
 
@@ -92,11 +92,10 @@
             android:layout_height="32dp"
             android:background="@null"
             app:srcCompat="@drawable/ic_done"
-            app:layout_constraintLeft_toLeftOf="@id/ivLocation"
+            app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginLeft="48dp" />
+            android:layout_marginRight="16dp" />
 
         <ImageButton
             android:id="@+id/ivLocation"
@@ -104,10 +103,10 @@
             android:layout_height="32dp"
             android:background="@null"
             app:srcCompat="@drawable/share_location"
-            app:layout_constraintLeft_toLeftOf="@id/ivAlarm"
+            app:layout_constraintRight_toLeftOf="@id/ivSubmit"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
-            android:layout_marginLeft="48dp"/>
+            android:layout_marginRight="16dp" />
 
         <ImageButton
             android:id="@+id/ivAlarm"
@@ -115,10 +114,10 @@
             android:layout_height="32dp"
             android:background="@null"
             app:srcCompat="@drawable/ic_alarm"
-            app:layout_constraintLeft_toLeftOf="@id/ivUnhide"
+            app:layout_constraintRight_toLeftOf="@id/ivLocation"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
-            android:layout_marginLeft="48dp" />
+            android:layout_marginRight="16dp" />
 
         <ImageButton
             android:id="@+id/ivUnhide"
@@ -126,10 +125,19 @@
             android:layout_height="32dp"
             android:background="@null"
             app:srcCompat="@drawable/ic_visible"
-            app:layout_constraintLeft_toLeftOf="@id/ivBack"
+            app:layout_constraintRight_toLeftOf="@id/ivAlarm"
             app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="16dp"
-            android:layout_marginLeft="216dp"
+            android:layout_marginRight="16dp"
+            />
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             />
 
 

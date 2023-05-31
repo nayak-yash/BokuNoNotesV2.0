@@ -37,14 +37,8 @@ class MainFragment : Fragment(), BiometricAuthListener {
     private lateinit var mAdapter: NoteAdapter
     private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
-    private lateinit var bottomSheetFragment: BottomSheetFragment
     private val noteViewModel by viewModels<NotesViewModel>()
 
-    private companion object{
-        private const val TAG = "Mainxy"
-        private val VIEW_PRIVATE = 202
-        private val UNHIDE: Int = 303
-    }
 
 
     override fun onCreateView(
@@ -107,8 +101,9 @@ class MainFragment : Fragment(), BiometricAuthListener {
                     job = MainScope().launch {
                         delay(SEARCH_NOTES_TIME_DELAY)
                         if(query.isNotEmpty()) {
+                            val newQuery = "%$query%"
                             if(view!=null){
-                                noteViewModel.getSearchNotes(query).observe(viewLifecycleOwner){
+                                noteViewModel.getSearchNotes(newQuery).observe(viewLifecycleOwner){
                                     mAdapter.submitList(it)
                                 }
                             }
@@ -217,7 +212,7 @@ class MainFragment : Fragment(), BiometricAuthListener {
 
     override fun onBiometricAuthenticateError(error: Int, errMsg: String) {
         tempNote = null
-        Toast.makeText(context, "$errMsg", Toast.LENGTH_SHORT)
+        Toast.makeText(context, errMsg, Toast.LENGTH_SHORT)
             .show()
     }
 
